@@ -4,10 +4,19 @@ from django.contrib import admin
 from .models import Category, Brand, Color, Size, Product, ProductAttribute, Banner
 
 admin.site.register(Banner)
-admin.site.register(Category)
-admin.site.register(Brand)
-admin.site.register(Color)
 admin.site.register(Size)
+
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('title', 'image_tag')
+admin.site.register(Category, CategoryAdmin)
+
+class BrandAdmin(admin.ModelAdmin):
+    list_display = ('title', 'image_tag')
+admin.site.register(Brand, BrandAdmin)
+
+class ColorAdmin(admin.ModelAdmin):
+    list_display = ('title', 'color_bg')
+admin.site.register(Color, ColorAdmin)
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'brand', 'color', 'size', 'status')

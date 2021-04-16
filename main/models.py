@@ -3,11 +3,17 @@ from django.utils.html import mark_safe
 
 # Banner
 class Banner(models.Model):
-    img = models.CharField(max_length=200)
+    img = models.ImageField(upload_to='banner_imgs/')
     alt_text = models.CharField(max_length=300)
 
     class Meta:
         verbose_name_plural = '1. Banners'
+
+    def image_tag(self):
+        return mark_safe('<img src="%s" width="130" height="50" />' % (self.img.url))
+
+    def __str__(self):
+        return self.alt_text
 
 # Category Model
 class Category(models.Model):
@@ -64,15 +70,13 @@ class Size(models.Model):
 # Product Model
 class Product(models.Model):
     title = models.CharField(max_length=200)
-    image = models.ImageField(upload_to="product_imgs/")
     slug = models.CharField(max_length=400)
     details = models.TextField()
     specs = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
-    color = models.ForeignKey(Color, on_delete=models.CASCADE)
-    size = models.ForeignKey(Size, on_delete=models.CASCADE)
     status = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
 
     class Meta:
         verbose_name_plural = '6. Products'
@@ -86,9 +90,13 @@ class ProductAttribute(models.Model):
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
     size = models.ForeignKey(Size, on_delete=models.CASCADE)
     price = models.PositiveIntegerField()
+    image = models.ImageField(upload_to="product_imgs/", null=True)
 
     class Meta:
         verbose_name_plural = '7. ProductAttributes'
+
+    def image_tag(self):
+        return mark_safe('<img src="%s" width="50" height="50" />' % (self.image.url))
 
     def __str__(self):
         return self.product.title

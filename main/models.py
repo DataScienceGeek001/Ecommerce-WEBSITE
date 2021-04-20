@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils.html import mark_safe
+from django.contrib.auth.models import User
+
 
 # Banner
 class Banner(models.Model):
@@ -100,3 +102,6 @@ class ProductAttribute(models.Model):
 
     def __str__(self):
         return self.product.title
+
+
+# class Cart(models.Model):

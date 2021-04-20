@@ -22,7 +22,7 @@
 		  <div class="collapse navbar-collapse" id="navbarNav">
 		  	<form class="form-inline my-2 my-lg-0" action="/search">
 		      <div class="input-group">
-				  <input name="q" type="text" class="form-control" placeholder="search" />
+				  <input name="q" type="text" class="form-control" placeholder="Search" />
 				  <div class="input-group-append">
 				    <button class="btn btn-dark" type="submit" id="button-addon2">Search</button>
 				  </div>
@@ -39,11 +39,23 @@
 		        <a class="nav-link text-white" href="{% url 'brand-list' %}">Brands</a>
 		      </li>
 		      <li class="nav-item">
-		        <a class="nav-link text-white" href="/cart.php"><i class="fa fa-shopping-cart"></i> Cart (2)</a>
+		        <a class="nav-link text-white" href=""><i class="fa fa-shopping-cart"></i>Cart</a>
 		      </li>
-		      <li class="nav-item">
-		        <a class="nav-link text-white" href="/account.php"><i class="fa fa-user"></i> My Account</a>
+			  {% if user.is_authenticated %}
+			  <li class="nav-item">
+		        <a class="nav-link text-white" href=""><i class="fa fa-user"></i>Welcome, {{user.username}}</a>
 		      </li>
+			  <li class="nav-item">
+		        <a class="nav-link text-white" href="{% url 'logout' %}"><i class="fa fa-user"></i>Logout</a>
+		      </li>
+			  {% else %}
+			  <li class="nav-item">
+		        <a class="nav-link text-white" href="{% url 'login' %}"><i class="fa fa-user"></i> Login</a>
+		      </li>
+			  <li class="nav-item">
+		        <a class="nav-link text-white" href="{% url 'register' %}"><i class="fa fa-user"></i> Register</a>
+		      </li>
+			  {% endif %}
 		    </ul>
 		  </div>
 		</div>

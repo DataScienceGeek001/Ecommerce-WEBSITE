@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+from .views import *
+
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -18,6 +20,8 @@ urlpatterns = [
     path("logout", views.logout_request, name= "logout"),
     path("admin-panel", views.admin_panel, name="admin-panel"),
     path("filter-data", views.filter_data, name="filter_data"),
+    path("add-to-cart-<int:pro_id>/", AddToCartView.as_view(), name="addtocart"),
+    path("my-cart/", MyCartView.as_view(), name="mycart"),
 ]
 
 if settings.DEBUG:

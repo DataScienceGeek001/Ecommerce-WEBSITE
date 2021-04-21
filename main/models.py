@@ -3,6 +3,18 @@ from django.utils.html import mark_safe
 from django.contrib.auth.models import User
 
 
+class Customer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=200)
+    address = models.CharField(max_length=200, null=True, blank=True)
+    joined_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = 'Customers'
+
+    def __str__(self):
+        return self.full_name
+
 # Banner
 class Banner(models.Model):
     img = models.ImageField(upload_to='banner_imgs/')
@@ -78,6 +90,7 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
     status = models.BooleanField(default=True)
+    price = models.PositiveIntegerField(null=True)
     is_featured = models.BooleanField(default=False)
 
     class Meta:
@@ -91,7 +104,6 @@ class ProductAttribute(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
     size = models.ForeignKey(Size, on_delete=models.CASCADE)
-    price = models.PositiveIntegerField()
     image = models.ImageField(upload_to="product_imgs/", null=True)
 
     class Meta:
@@ -104,4 +116,28 @@ class ProductAttribute(models.Model):
         return self.product.title
 
 
-# class Cart(models.Model):
+class Cart(models.Model):
+    customer = models.ForeignKey(
+        Customer, on_delete=models.SET_NULL, null=True, blank=True)
+    total = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = '8. Cart'
+
+    def __str__(self):
+        return "Cart: " + str(self.id)
+
+class CartProduct(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    rate = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField()
+    subtotal = models.PositiveIntegerField()
+
+    class Meta:
+        verbose_name_plural = '9. Cart Products'
+
+    def __str__(self):
+        return "Cart: " + str(self.cart.id) + " CartProduct: " + str(self.id)
+

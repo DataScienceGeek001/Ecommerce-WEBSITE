@@ -3,6 +3,9 @@ from django.contrib import admin
 # Register your models here.
 from .models import Category, Brand, Color, Size, Product, ProductAttribute, Banner
 
+from .models import *
+
+admin.site.register([Customer, Cart, CartProduct])
 
 admin.site.register(Size)
 
@@ -23,11 +26,10 @@ class ColorAdmin(admin.ModelAdmin):
 admin.site.register(Color, ColorAdmin)
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'brand', 'status', 'is_featured')
+    list_display = ('id', 'title', 'brand', 'price', 'status', 'is_featured')
     list_editable = ('status', 'is_featured')
 admin.site.register(Product, ProductAdmin)
 
-# Product Attribute
 class ProductAttributeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'image_tag', 'product', 'price', 'color', 'size')
+    list_display = ('id', 'image_tag', 'product', 'color', 'size')
 admin.site.register(ProductAttribute, ProductAttributeAdmin)

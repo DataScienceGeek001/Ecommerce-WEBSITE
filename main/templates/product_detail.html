@@ -15,7 +15,7 @@
 			<table class="table table-bordered">
 				<tr>
 					<th>Price</th>
-					<th>Rs. {{data.productattribute_set.first.price}}</th>
+					<th>Rs. {{data.price}}</th>
 				</tr>
 				<tr>
 					<th>Colors</th>
@@ -36,9 +36,8 @@
 			</table>
 			<hr/>
 			<div class="input-group my-3" style="width:30%;">
-			  <input type="number" class="form-control" value="1" />
 			  <div class="input-group-append">
-			    <button class="btn btn-primary btn-sm" type="button" id="button-addon2"><i class="fa fa-shopping-cart"></i> Add to Cart</button>
+			    <a href = "{% url 'addtocart' data.id %}"><button class="btn btn-primary btn-sm" type="button" id="button-addon2"><i class="fa fa-shopping-cart"></i> Add to Cart</button></a>
 			  </div>
 			</div>
 		</div>

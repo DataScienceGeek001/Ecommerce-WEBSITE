@@ -5,7 +5,7 @@ from .models import Category, Brand, Color, Size, Product, ProductAttribute, Ban
 
 from .models import *
 
-admin.site.register([Customer, Cart, CartProduct])
+admin.site.register([Customer, Cart, CartProduct, Order])
 
 admin.site.register(Size)
 

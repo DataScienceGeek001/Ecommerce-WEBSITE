@@ -41,19 +41,26 @@
 		      <li class="nav-item">
 		        <a class="nav-link text-white" href="{% url 'mycart' %}"><i class="fa fa-shopping-cart"></i>Cart</a>
 		      </li>
-			  {% if user.is_authenticated %}
+			  {% if request.user.customer %}
 			  <li class="nav-item">
-		        <a class="nav-link text-white" href=""><i class="fa fa-user"></i>Welcome, {{user.username}}</a>
+		        <a class="nav-link text-white" href="{% url 'customerprofile' %}"><i class="fa fa-user"></i>Welcome, {{user.username}}!</a>
 		      </li>
 			  <li class="nav-item">
-		        <a class="nav-link text-white" href="{% url 'logout' %}"><i class="fa fa-user"></i>Logout</a>
+		        <a class="nav-link text-white" href="{% url 'customerlogout' %}"><i class="fa fa-user"></i>Logout</a>
+		      </li>
+			  {% elif request.user.is_superuser %}
+			  <li class="nav-item">
+		        <a class="nav-link text-white" href="{% url 'admin-panel' %}"><i class="fa fa-user"></i>Welcome, {{user.username}}!</a>
+		      </li>
+			  <li class="nav-item">
+		        <a class="nav-link text-white" href="{% url 'customerlogout' %}"><i class="fa fa-user"></i>Logout</a>
 		      </li>
 			  {% else %}
 			  <li class="nav-item">
-		        <a class="nav-link text-white" href="{% url 'login' %}"><i class="fa fa-user"></i> Login</a>
+		        <a class="nav-link text-white" href="{% url 'customerlogin' %}"><i class="fa fa-user"></i> Login</a>
 		      </li>
 			  <li class="nav-item">
-		        <a class="nav-link text-white" href="{% url 'register' %}"><i class="fa fa-user"></i> Register</a>
+		        <a class="nav-link text-white" href="{% url 'customerregistration' %}"><i class="fa fa-user"></i> Register</a>
 		      </li>
 			  {% endif %}
 		    </ul>

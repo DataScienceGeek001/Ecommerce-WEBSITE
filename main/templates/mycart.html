@@ -28,9 +28,9 @@
                         <td>{{cp.quantity}}</td>
                         <td>{{cp.subtotal}}</td>
                         <td colspan="2">
-                            <a href="" class="btn btn-primary"> ADD </a>
-                            <a href="" class="btn btn-warning"> REMOVE </a>
-                            <a href="" class="btn btn-danger"> DEL </a>
+                            <a href="{% url 'managecart' cp.id %}?action=inc" class="btn btn-primary"> ADD </a>
+                            <a href="{% url 'managecart' cp.id %}?action=dcr" class="btn btn-warning"> REMOVE </a>
+                            <a href="{% url 'managecart' cp.id %}?action=rmv" class="btn btn-danger"> DEL </a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -38,12 +38,12 @@
                         <th colspan="4" class="text-right">Total</th>
                         <th>Rs. {{cart.total}}</th>
                         {% if cart.cartproduct_set.all %}
-                        <th><a href="">Empty Cart</a></th>
+                        <th><a href="{% url 'emptycart' %}">Empty Cart</a></th>
                         {% endif %}
                     </tr>
                     {% if cart.cartproduct_set.all %}
                     <tr>
-                        <th><a class="btn btn-info" href=""> Checkout </a></th>
+                        <th><a class="btn btn-info" href="{% url 'checkout' %}"> Checkout </a></th>
                     </tr>
                     {% endif %}
                 </tbody>

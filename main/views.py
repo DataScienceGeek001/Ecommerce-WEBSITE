@@ -7,15 +7,29 @@ from .models import *
 from django.db.models import Max, Min, Count
 from django.template.loader import render_to_string
 
-from .forms import NewUserForm
+from django.urls import reverse_lazy, reverse
+
+from .forms import NewUserForm, CheckoutForm, CustomerRegistrationForm, CustomerLoginForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 
-from django.views.generic import TemplateView
+from django.views.generic import View, TemplateView, CreateView, FormView
 from django.contrib.auth.decorators import login_required
 
 # Create your views here.
+
+class EcomMixin(object):
+    def dispatch(self, request, *args, **kwargs):
+        cart_id = request.session.get("cart_id")
+        if cart_id:
+            cart_obj = Cart.objects.get(id=cart_id)
+            if request.user.is_authenticated and request.user.customer:
+                cart_obj.customer = request.user.customer
+                cart_obj.save()
+        return super().dispatch(request, *args, **kwargs)
+
+
 def home(request):
     banners = Banner.objects.all().order_by('-id')
     data = Product.objects.filter(is_featured=True).order_by('-id')
@@ -75,34 +89,6 @@ def register_request(request):
     form = NewUserForm()
     return render (request=request, template_name="register.html", context={"register_form":form})
 
-def login_request(request):
-	if request.method == "POST":
-		form = AuthenticationForm(request, data=request.POST)
-		if form.is_valid():
-			username = form.cleaned_data.get('username')
-			password = form.cleaned_data.get('password')
-			user = authenticate(username=username, password=password)
-			if user.is_superuser:
-				login(request, user)
-				messages.info(request, f"You are now logged in as {username}.")
-				return redirect("admin-panel")
-			elif user is not None:
-				login(request, user)
-				messages.info(request, f"You are now logged in as {username}.")
-				return redirect("home")
-			else:
-				messages.error(request,"Invalid username or password.")
-		else:
-			messages.error(request,"Invalid username or password.")
-	form = AuthenticationForm()
-	return render(request=request, template_name="login.html", context={"login_form":form})
-
-
-def logout_request(request):
-	logout(request)
-	messages.info(request, "You have successfully logged out.") 
-	return redirect("home")
-
 
 def search(request):
     q = request.GET['q']
@@ -134,7 +120,7 @@ def filter_data(request):
     return JsonResponse({'data': t})
 
 
-class AddToCartView(TemplateView):
+class AddToCartView(EcomMixin, TemplateView):
     template_name = "addtocart.html"
     
     # @login_required
@@ -179,7 +165,7 @@ class AddToCartView(TemplateView):
         return context
 
 
-class MyCartView(TemplateView):
+class MyCartView(EcomMixin, TemplateView):
     template_name = "mycart.html"
 
     # @login_required(login_url='/login')
@@ -191,4 +177,156 @@ class MyCartView(TemplateView):
         else:
             cart = None
         context['cart'] = cart
+        return context
+
+class ManageCartView(EcomMixin, View):
+    def get(self, request, *args, **kwargs):
+        print("This is Manage Cart Section")
+        cp_id = self.kwargs["cp_id"]
+        action = request.GET.get("action")
+        cp_obj = CartProduct.objects.get(id=cp_id)
+        cart_obj = cp_obj.cart
+
+        if action == 'inc':
+            cp_obj.quantity += 1
+            cp_obj.subtotal += cp_obj.rate
+            cp_obj.save()
+            cart_obj.total += cp_obj.rate
+            cart_obj.save()
+        elif action == 'dcr':
+            cp_obj.quantity -= 1
+            cp_obj.subtotal -= cp_obj.rate
+            cp_obj.save()
+            cart_obj.total -= cp_obj.rate
+            cart_obj.save()
+            if cp_obj.quantity == 0:
+                cp_obj.delete()
+        elif action == 'rmv':
+            cart_obj.total -= cp_obj.subtotal
+            cart_obj.save()
+            cp_obj.delete()
+        else:
+            pass
+
+        return redirect("mycart")
+
+class EmptyCartView(EcomMixin, View):
+    def get(self, request, *args, **kwargs):
+        cart_id = request.session.get("cart_id", None)
+        if cart_id:
+            cart = Cart.objects.get(id=cart_id)
+            cart.cartproduct_set.all().delete()
+            cart.total = 0
+            cart.save()
+        return redirect("mycart")
+
+class CheckoutView(EcomMixin, CreateView):
+    template_name = "checkout.html"
+    form_class = CheckoutForm
+    success_url = reverse_lazy("home")
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.customer:
+            pass
+        else:
+            return redirect("/login/?next=/checkout/")
+        return super().dispatch(request, *args, **kwargs)
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cart_id = self.request.session.get("cart_id", None)
+        if cart_id:
+            cart_obj = Cart.objects.get(id=cart_id)
+        else:
+            cart_obj = None
+        context['cart'] = cart_obj
+        return context
+
+    def form_valid(self, form):
+        cart_id = self.request.session.get("cart_id")
+        if cart_id:
+            cart_obj = Cart.objects.get(id=cart_id)
+            form.instance.cart = cart_obj
+            form.instance.subtotal = cart_obj.total
+            form.instance.discount = 0
+            form.instance.total = cart_obj.total
+            form.instance.order_status = "Order Received"
+            del self.request.session['cart_id']
+        else:
+            return redirect("home")
+        return super().form_valid(form)
+
+
+class CustomerRegistrationView(EcomMixin, CreateView):
+    template_name = "customerregistration.html"
+    form_class = CustomerRegistrationForm
+    success_url = reverse_lazy("home")
+
+    def form_valid(self, form):
+        username = form.cleaned_data.get("username")
+        password = form.cleaned_data.get("password")
+        email = form.cleaned_data.get("email")
+        user = User.objects.create_user(username, email, password)
+        form.instance.user = user
+        login(self.request, user)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        if "next" in self.request.GET:
+            next_url = self.request.GET.get("next")
+            return next_url
+        else:
+            return self.success_url
+
+class CustomerLogoutView(EcomMixin, View):
+    def get(self, request):
+        logout(request)
+        return redirect("home")
+
+
+class CustomerLoginView(EcomMixin, FormView):
+    template_name = "customerlogin.html"
+    form_class = CustomerLoginForm
+    success_url = reverse_lazy("home")
+
+    # form_valid method is a type of post method and is available in createview formview and updateview
+    def form_valid(self, form):
+        uname = form.cleaned_data.get("username")
+        pword = form.cleaned_data["password"]
+        usr = authenticate(username=uname, password=pword)
+        if usr.is_superuser:
+            login(self.request, usr)
+            messages.info(self.request, f"You are now logged in as {uname}.")
+            return redirect("admin-panel")
+        if usr is not None and Customer.objects.filter(user=usr).exists():
+            login(self.request, usr)
+        else:
+            return render(self.request, self.template_name, {"form": self.form_class, "error": "Invalid credentials"})
+
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        if "next" in self.request.GET:
+            next_url = self.request.GET.get("next")
+            return next_url
+        else:
+            return self.success_url
+
+class CustomerProfileView(TemplateView):
+    template_name = "customerprofile.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and Customer.objects.filter(user=request.user).exists():
+            pass
+        else:
+            return redirect("/login/?next=/profile/")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        customer = self.request.user.customer
+        context['customer'] = customer
+        orders = Order.objects.filter(cart__customer=customer).order_by("-id")
+        context["orders"] = orders
         return context

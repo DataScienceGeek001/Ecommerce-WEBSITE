@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+from django.conf.urls import url
+
 from .views import *
 
 from django.conf import settings
@@ -28,7 +30,10 @@ urlpatterns = [
     path("logout/", CustomerLogoutView.as_view(), name="customerlogout"),
     path("login/", CustomerLoginView.as_view(), name="customerlogin"),
 
-    path("profile/", CustomerProfileView.as_view(), name="customerprofile"),
+    path("profile-<int:id>", CustomerProfileView.as_view(), name="customerprofile"),
+
+    url(r'^products/$', views.product_rest_list),
+    path("addToFavourite-<int:id>", views.add_to_favourite, name="addToFavourite"),
 
 ]
 

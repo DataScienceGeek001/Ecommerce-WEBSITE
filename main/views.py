@@ -1,5 +1,5 @@
-from django.shortcuts import render, redirect
-from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from .models import Category, Brand, Product, ProductAttribute, Banner
 
 from .models import *
@@ -16,6 +16,28 @@ from django.contrib.auth.forms import AuthenticationForm
 
 from django.views.generic import View, TemplateView, CreateView, FormView
 from django.contrib.auth.decorators import login_required
+
+
+# REST FRAMEWORK TESTING
+from rest_framework.renderers import JSONRenderer
+from rest_framework.parsers import JSONParser
+from .main_serializer import ProductSerializer
+
+class JSONResponse(HttpResponse):
+    """
+    An HttpResponse that renders its content into JSON.
+    """
+    def __init__(self, data, **kwargs):
+        content = JSONRenderer().render(data)
+        kwargs['content_type'] = 'application/json'
+        super(JSONResponse, self).__init__(content, **kwargs)
+
+
+def product_rest_list(request):
+    if request.method == 'GET':
+        products = Product.objects.all()
+        serializer = ProductSerializer(products, many=True)
+        return JSONResponse(serializer.data)
 
 # Create your views here.
 
@@ -70,6 +92,9 @@ def brand_product_list(request, brand_id):
 # Product Details
 def product_detail(request, slug, id):
     product = Product.objects.get(id=id)
+    is_favourite = False
+    # if product.favourite.filter(id=request.customer.id).exists():
+    #     is_favourite = True
     related_products = Product.objects.filter(category=product.category).exclude(id=id)[:3]
     return render(request, 'product_detail.html', {'data': product, 'related': related_products})
 
@@ -329,4 +354,16 @@ class CustomerProfileView(TemplateView):
         context['customer'] = customer
         orders = Order.objects.filter(cart__customer=customer).order_by("-id")
         context["orders"] = orders
+        favorites = Product.objects.filter(favorite=customer)
+        context["favorites"] = favorites
         return context
+
+def add_to_favourite(request, id):
+    print(id)
+    product = get_object_or_404(Product, id=id)
+    if product.favorite.filter(id=request.user.customer.id).exists():
+        print(request.user.customer)
+        product.favorite.remove(request.user.customer)
+    else:
+        product.favorite.add(request.user.customer)
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])

@@ -92,6 +92,7 @@ class Product(models.Model):
     status = models.BooleanField(default=True)
     price = models.PositiveIntegerField(null=True)
     is_featured = models.BooleanField(default=False)
+    favorite = models.ManyToManyField(Customer, blank=True)
 
     class Meta:
         verbose_name_plural = '6. Products'

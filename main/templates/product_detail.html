@@ -37,8 +37,9 @@
 			<hr/>
 			<div class="input-group my-3" style="width:30%;">
 			  <div class="input-group-append">
-			    <a href = "{% url 'addtocart' data.id %}"><button class="btn btn-primary btn-sm" type="button" id="button-addon2"><i class="fa fa-shopping-cart"></i> Add to Cart</button></a>
-			  </div>
+			    <a href = "{% url 'addtocart' data.id %}"><button class="btn btn-success mr-1" type="button" id="button-addon2"><i class="fa fa-shopping-cart"></i> Add to Cart</button></a>
+				<a href = "{% url 'addToFavourite' data.id %}"><button class="btn btn-primary btn-hover" type="button" id="button-addon2">Favourites<i class="fa fa-heart"></i></button></a>
+			</div>
 			</div>
 		</div>
 	</div>

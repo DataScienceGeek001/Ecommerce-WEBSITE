@@ -41,6 +41,34 @@
                 </tbody>
             </table>
         </div>
+        <div class="col-md-4"></div>
+        <div class="col-md-8">
+            <br />
+            <h3>Favourite Items</h3>
+            <hr>
+            <table class="table table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>SN</th>
+                        <th>Item</th>
+                        <th>Brand</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prod in favorites %}
+                    <tr>
+                        <td>{{forloop.counter}}</td>
+                        <td><a href="/product/{{prod.slug}}/{{prod.id}}">{{prod.title}}</td></a>
+                        <td>{{prod.brand}}</td>
+                        <td>{{prod.category}}</td>
+                        <td>{{prod.price}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -47,7 +47,7 @@
                 </div>
                 <div class="card-footer">
                     <a href = "{% url 'addtocart' product.id %}"><button class="btn btn-sm btn-primary" ><i class="fa fa-shopping-cart"></i></button></a>
-                    <button class="btn btn-sm btn-danger"><i class="fa fa-heart"></i></button>
+                    <a href = "{% url 'addToFavourite' product.id %}"><button class="btn btn-sm btn-danger"><i class="fa fa-heart"></i></button></a>
                     <span class="float-right">
                         4.5/5
                         <i class="fa fa-star text-warning"></i>

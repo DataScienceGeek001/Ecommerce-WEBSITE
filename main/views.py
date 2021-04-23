@@ -14,7 +14,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 
-from django.views.generic import View, TemplateView, CreateView, FormView
+from django.views.generic import View, TemplateView, CreateView, FormView, ListView
 from django.contrib.auth.decorators import login_required
 
 
@@ -99,9 +99,6 @@ def product_detail(request, slug, id):
     return render(request, 'product_detail.html', {'data': product, 'related': related_products})
 
 
-def admin_panel(request):
-	return render(request, "admin.html")
-
 def register_request(request):
     if request.method == "POST":
         form = NewUserForm(request.POST)
@@ -155,7 +152,7 @@ class AddToCartView(EcomMixin, TemplateView):
         product_id = self.kwargs['pro_id']
         # get product
         product_obj = Product.objects.get(id=product_id)
-        print(product_obj.price)
+        # print(product_obj.price)
         # check if cart exists
         cart_id = self.request.session.get("cart_id", None)
         print(cart_id)
@@ -315,15 +312,13 @@ class CustomerLoginView(EcomMixin, FormView):
     form_class = CustomerLoginForm
     success_url = reverse_lazy("home")
 
-    # form_valid method is a type of post method and is available in createview formview and updateview
     def form_valid(self, form):
         uname = form.cleaned_data.get("username")
         pword = form.cleaned_data["password"]
         usr = authenticate(username=uname, password=pword)
         if usr.is_superuser:
             login(self.request, usr)
-            messages.info(self.request, f"You are now logged in as {uname}.")
-            return redirect("admin-panel")
+            return redirect("adminhome")
         if usr is not None and Customer.objects.filter(user=usr).exists():
             login(self.request, usr)
         else:
@@ -359,7 +354,7 @@ class CustomerProfileView(TemplateView):
         return context
 
 def add_to_favourite(request, id):
-    print(id)
+    # print(id)
     product = get_object_or_404(Product, id=id)
     if product.favorite.filter(id=request.user.customer.id).exists():
         print(request.user.customer)
@@ -367,3 +362,76 @@ def add_to_favourite(request, id):
     else:
         product.favorite.add(request.user.customer)
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+class AdminRequiredMixin(object):
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.is_superuser:
+            pass
+        else:
+            return redirect("/login/")
+        return super().dispatch(request, *args, **kwargs)
+
+class AdminHomeView(AdminRequiredMixin, TemplateView):
+    template_name = "adminhome.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['customers'] = Customer.objects.all()
+        context['products'] = Product.objects.all()
+        context["pendingorders"] = Order.objects.filter(order_status="Order Received").order_by("-id")
+        return context
+
+class DeleteCustomer(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        print("This is User Section for Admin")
+        user_id = self.kwargs["cust_id"]
+        user_obj = User.objects.get(id=user_id)
+        if user_obj:
+            user_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+class DeleteProduct(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        print("This is Product Section for Admin")
+        prod_id = self.kwargs["prod_id"]
+        print(prod_id)
+        prod_obj = Product.objects.get(id=prod_id)
+        print(prod_obj)
+        if prod_obj:
+            prod_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+class AdminOrderDetails(AdminRequiredMixin, TemplateView):
+    template_name = "adminOrderDetails.html"
+
+    def get_context_data(self, **kwargs):
+        print("This is Order Details for Admin")
+        context = super().get_context_data(**kwargs)
+        order_id = self.kwargs["ord_id"]
+        print(order_id)
+        order_obj = Order.objects.get(id=order_id)
+        context['order'] = order_obj
+        context['statuses'] = ORDER_STATUS
+        return context
+
+class AdminOrderListView(AdminRequiredMixin, ListView):
+    template_name = "adminorderlist.html"
+    queryset = Order.objects.all().order_by("-id")
+    context_object_name = "allorders"
+
+
+class AdminOrderStatusChange(AdminRequiredMixin, View):
+    
+    def post(self, request, *args, **kwargs):
+        ord_id = self.kwargs['ord_id']
+        ord_obj = Order.objects.get(id=ord_id)
+        print("This is Order Status Change View")
+        print(ord_id, ord_obj)
+        new_status = request.POST.get('status')
+        ord_obj.order_status = new_status
+        ord_obj.save()
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])

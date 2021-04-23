@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'main',
     'crispy_forms',
     'rest_framework',
+    'django.contrib.humanize',
 ]
 
 REST_FRAMEWORK = {

@@ -17,7 +17,6 @@ urlpatterns = [
     path('category-product-list/<int:cat_id>', views.category_product_list, name='category-product-list'),
     path('brand-product-list/<int:brand_id>', views.brand_product_list, name='brand-product-list'),
     path('product/<str:slug>/<int:id>', views.product_detail, name='product-detail'),
-    path("admin-panel", views.admin_panel, name="admin-panel"),
     path("filter-data", views.filter_data, name="filter_data"),
     path("add-to-cart-<int:pro_id>/", AddToCartView.as_view(), name="addtocart"),
     path("my-cart/", MyCartView.as_view(), name="mycart"),
@@ -34,6 +33,15 @@ urlpatterns = [
 
     url(r'^products/$', views.product_rest_list),
     path("addToFavourite-<int:id>", views.add_to_favourite, name="addToFavourite"),
+    path("admin-home/", AdminHomeView.as_view(), name="adminhome"),
+
+    path("delete-customer/<int:cust_id>", DeleteCustomer.as_view(), name="deletecustomer"),
+    path("delete-product/<int:prod_id>", DeleteProduct.as_view(), name="deleteproduct"),
+
+    path("admin-order-details/<int:ord_id>", AdminOrderDetails.as_view(), name="adminOrderDetails"),
+    path("admin-order-list", AdminOrderListView.as_view(), name="adminOrderList"),
+    path('admin-order-status-change-<int:ord_id>', AdminOrderStatusChange.as_view(), name='adminOrderStatusChange'),
+
 
 ]
 

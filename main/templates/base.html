@@ -50,7 +50,7 @@
 		      </li>
 			  {% elif request.user.is_superuser %}
 			  <li class="nav-item">
-		        <a class="nav-link text-white" href="{% url 'admin-panel' %}"><i class="fa fa-user"></i>Welcome, {{user.username}}!</a>
+		        <a class="nav-link text-white" href="{% url 'adminhome' %}"><i class="fa fa-user"></i>Welcome, {{user.username}}!</a>
 		      </li>
 			  <li class="nav-item">
 		        <a class="nav-link text-white" href="{% url 'customerlogout' %}"><i class="fa fa-user"></i>Logout</a>

@@ -60,7 +60,7 @@
                     {% for prod in favorites %}
                     <tr>
                         <td>{{forloop.counter}}</td>
-                        <td><a href="/product/{{prod.slug}}/{{prod.id}}">{{prod.title}}</td></a>
+                        <td><a href="/product/{{prod.slug}}/{{prod.id}}" target="_blank">{{prod.title}}</td></a>
                         <td>{{prod.brand}}</td>
                         <td>{{prod.category}}</td>
                         <td>{{prod.price}}</td>

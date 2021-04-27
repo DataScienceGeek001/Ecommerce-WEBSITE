@@ -114,8 +114,8 @@ class ProductAttributeForm(forms.ModelForm):
     product = forms.ModelChoiceField(queryset=Product.objects.all())
     color = forms.ModelChoiceField(queryset=Color.objects.all())
     size = forms.ModelChoiceField(queryset=Size.objects.all())
-    image = forms.ImageField()
-
+    image = forms.FileField()
+    
     class Meta:
         model = ProductAttribute
         fields = ["product", "color", "size", "image"]

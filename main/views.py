@@ -527,6 +527,18 @@ class AddProductView(AdminRequiredMixin, FormView):
         
         return super().form_valid(form)
 
+# def addproductattr(request):
+    
+#     if request.method == "POST":
+#         form = ProductAttributeForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             print("Inside Form")
+#             form.save()
+#             return redirect('/admin-home')
+#     else:
+#         form = ProductAttributeForm
+#     return render(request,'addProductAttributes.html', {'form': form})
+
 class AddProductAttributeView(AdminRequiredMixin, FormView):
     template_name = "addProductAttributes.html"
     form_class = ProductAttributeForm
@@ -537,9 +549,8 @@ class AddProductAttributeView(AdminRequiredMixin, FormView):
         color = form.cleaned_data.get("color")
         size = form.cleaned_data.get("size")
         image = form.cleaned_data.get("image")
-        print("Hello")
-        form.save()
-        print(image)
+        p = ProductAttribute.objects.create(product=product, color=color, size=size, image = image)
+        p.save
         return super().form_valid(form)
 
 @csrf_exempt

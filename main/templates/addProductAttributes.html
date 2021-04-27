@@ -7,7 +7,7 @@
         <div class="col-md-6 mx-auto">
             <br />
             <h3>Add Product Attributes</h3><hr>
-            <form action="" method="POST">
+            <form action="" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 {{form|crispy}}
                 <button class="btn btn-primary mt-3">Add</button>

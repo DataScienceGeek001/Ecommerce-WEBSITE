@@ -9,14 +9,22 @@ from django.template.loader import render_to_string
 
 from django.urls import reverse_lazy, reverse
 
-from .forms import NewUserForm, CheckoutForm, CustomerRegistrationForm, CustomerLoginForm
+from .forms import *
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 
 from django.views.generic import View, TemplateView, CreateView, FormView, ListView
 from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 
+# For Password Reset
+from .utils import password_reset_token
+from django.core.mail import send_mail
+from django.conf import settings
+
+import razorpay
+from django.views.decorators.csrf import csrf_exempt
 
 # REST FRAMEWORK TESTING
 from rest_framework.renderers import JSONRenderer
@@ -142,10 +150,10 @@ def filter_data(request):
     return JsonResponse({'data': t})
 
 
+@method_decorator(login_required(login_url="/login/"), name='dispatch')
 class AddToCartView(EcomMixin, TemplateView):
     template_name = "addtocart.html"
     
-    # @login_required
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # get product id from requested url
@@ -169,12 +177,14 @@ class AddToCartView(EcomMixin, TemplateView):
                 cartproduct.save()
                 cart_obj.total += product_obj.price
                 cart_obj.save()
+                messages.success(self.request, 'Product Added to cart successfully!')
             # new item is added in cart
             else:
                 cartproduct = CartProduct.objects.create(
                     cart=cart_obj, product=product_obj, rate=product_obj.price, quantity=1, subtotal=product_obj.price)
                 cart_obj.total += product_obj.price
                 cart_obj.save()
+                messages.success(self.request, 'Product Added to cart successfully!')
 
         else:
             cart_obj = Cart.objects.create(total=0)
@@ -183,6 +193,7 @@ class AddToCartView(EcomMixin, TemplateView):
                 cart=cart_obj, product=product_obj, rate=product_obj.price, quantity=1, subtotal=product_obj.price)
             cart_obj.total += product_obj.price
             cart_obj.save()
+            messages.success(self.request, 'Product Added to cart successfully!')
 
         return context
 
@@ -245,7 +256,7 @@ class EmptyCartView(EcomMixin, View):
 class CheckoutView(EcomMixin, CreateView):
     template_name = "checkout.html"
     form_class = CheckoutForm
-    success_url = reverse_lazy("home")
+    success_url = '/success/'
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.user.customer:
@@ -262,6 +273,12 @@ class CheckoutView(EcomMixin, CreateView):
             cart_obj = Cart.objects.get(id=cart_id)
         else:
             cart_obj = None
+
+        client = razorpay.Client(
+            auth=("rzp_test_ejxwUwJ32rcHr9", "NyZiMrNZQSE6yHStcTvTo63a"))
+
+        payment = client.order.create({'amount': cart_obj.total, 'currency': 'INR', 'payment_capture': '1'})
+        
         context['cart'] = cart_obj
         return context
 
@@ -316,6 +333,8 @@ class CustomerLoginView(EcomMixin, FormView):
         uname = form.cleaned_data.get("username")
         pword = form.cleaned_data["password"]
         usr = authenticate(username=uname, password=pword)
+        if usr is None:
+            return render(self.request, self.template_name, {"form": self.form_class, "error": "Invalid credentials"})
         if usr.is_superuser:
             login(self.request, usr)
             return redirect("adminhome")
@@ -353,6 +372,7 @@ class CustomerProfileView(TemplateView):
         context["favorites"] = favorites
         return context
 
+@login_required(login_url='/login/')
 def add_to_favourite(request, id):
     # print(id)
     product = get_object_or_404(Product, id=id)
@@ -422,6 +442,7 @@ class AdminOrderListView(AdminRequiredMixin, ListView):
     template_name = "adminorderlist.html"
     queryset = Order.objects.all().order_by("-id")
     context_object_name = "allorders"
+    # paginate_by = 3
 
 
 class AdminOrderStatusChange(AdminRequiredMixin, View):
@@ -435,3 +456,93 @@ class AdminOrderStatusChange(AdminRequiredMixin, View):
         ord_obj.order_status = new_status
         ord_obj.save()
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+
+class PasswordForgotView(FormView):
+    template_name = "forgotpassword.html"
+    form_class = PasswordForgotForm
+    success_url = "/login/"
+
+    def form_valid(self, form):
+        # get email from user
+        email = form.cleaned_data.get("email")
+        # get current host ip/domain
+        url = self.request.META['HTTP_HOST']
+        # get customer and then user
+        customer = Customer.objects.get(user__email=email)
+        user = customer.user
+        # send mail to the user with email
+        text_content = 'Please Click the link below to reset your password. '
+        html_content = url + "/password-reset/" + email + \
+            "/" + password_reset_token.make_token(user) + "/"
+        send_mail(
+            'Password Reset Link | Django Ecommerce',
+            text_content + html_content,
+            settings.EMAIL_HOST_USER,
+            [email],
+            fail_silently=False,
+        )
+        return super().form_valid(form)
+
+class PasswordResetView(FormView):
+    template_name = "passwordreset.html"
+    form_class = PasswordResetForm
+    success_url = "/login/"
+
+    def dispatch(self, request, *args, **kwargs):
+        email = self.kwargs.get("email")
+        user = User.objects.get(email=email)
+        token = self.kwargs.get("token")
+        if user is not None and password_reset_token.check_token(user, token):
+            pass
+        else:
+            return redirect(reverse("passwordforgot"))
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        password = form.cleaned_data['new_password']
+        email = self.kwargs.get("email")
+        user = User.objects.get(email=email)
+        user.set_password(password)
+        user.save()
+        return super().form_valid(form)
+
+class AddProductView(AdminRequiredMixin, FormView):
+    template_name = "addProducts.html"
+    form_class = ProductAddForm
+    success_url = "/admin-home/"
+
+    def form_valid(self, form):
+        title = form.cleaned_data.get("title")
+        slug = form.cleaned_data.get("slug")
+        details = form.cleaned_data.get("details")
+        specs = form.cleaned_data.get("specs")
+        category = form.cleaned_data.get("category")
+        brand = form.cleaned_data.get("brand")
+        price = form.cleaned_data.get("price")
+        is_featured = form.cleaned_data.get("is_featured")
+        
+        form.save()
+        
+        return super().form_valid(form)
+
+class AddProductAttributeView(AdminRequiredMixin, FormView):
+    template_name = "addProductAttributes.html"
+    form_class = ProductAttributeForm
+    success_url = "/admin-home/"
+
+    def form_valid(self, form):
+        product = form.cleaned_data.get("product")
+        color = form.cleaned_data.get("color")
+        size = form.cleaned_data.get("size")
+        image = form.cleaned_data.get("image")
+        print("Hello")
+        form.save()
+        print(image)
+        return super().form_valid(form)
+
+@csrf_exempt
+def success(request):
+    del request.session['cart_id']
+    return render(request, "success.html")

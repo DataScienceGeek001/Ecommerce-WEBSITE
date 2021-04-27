@@ -24,7 +24,10 @@
 		        <a class="nav-link text-white" href="{% url 'adminOrderList' %}">All Orders</a>
 		      </li>
               <li class="nav-item">
-		        <a class="nav-link text-white" href="">Add Products</a>
+		        <a class="nav-link text-white" href="{% url 'addProduct' %}">Add Products</a>
+		      </li>
+			  <li class="nav-item">
+		        <a class="nav-link text-white" href="{% url 'addProductAttribute' %}">Add Attributes</a>
 		      </li>
 			  <li class="nav-item">
 		        <a class="nav-link text-white" href="{% url 'adminhome' %}"><i class="fa fa-user"></i>Welcome, {{user.username}}!</a>

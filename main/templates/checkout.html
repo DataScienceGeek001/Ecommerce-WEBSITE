@@ -2,6 +2,7 @@
 
 {% block title %}Checkout {% endblock %}
 {% load crispy_forms_tags %}
+{% load mathfilters %}
 {% block content %}
 <div class="container">
     <div class="row">
@@ -37,11 +38,25 @@
         </div>
         <div class="col-md-6 mt-5 mb-4">
             <h3>Checkout Form</h3>
-            <form action="" method="POST">
+            <form action="{% url 'success' %}" method="POST">
                 {% csrf_token %}
                 {{form|crispy}}
-                <button class="btn btn-info mt-3">Place order</button>
-            </form>
+                <br/>
+                <script
+                    src="https://checkout.razorpay.com/v1/checkout.js"
+                    data-key="rzp_test_ejxwUwJ32rcHr9" 
+                    data-amount="{{ cart.total|mul:100 }}" 
+                    data-currency="INR"
+                    data-order_id="{{payment.id}}"
+                    data-buttontext="Pay with Razorpay"
+                    data-name="ShopIT"
+                    data-description="Ecommerce Website"
+                    data-image="https://example.com/your_logo.jpg"
+                    data-prefill.name="John Doe"
+                    data-prefill.email="john.doe@example.com"
+                    data-theme.color="#F37254"
+                ></script>
+                </form>
         </div>
     </div>
 </div>

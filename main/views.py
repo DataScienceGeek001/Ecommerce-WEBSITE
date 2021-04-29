@@ -405,12 +405,15 @@ class AdminRequiredMixin(object):
         return super().dispatch(request, *args, **kwargs)
 
 class AdminHomeView(AdminRequiredMixin, TemplateView):
-    template_name = "adminhome.html"
+    template_name = "adminhome2.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['customers'] = Customer.objects.all()
         context['products'] = Product.objects.all()
+        context['brands'] = Brand.objects.all()
+        context['categorys'] = Category.objects.all()
+        context['orders'] = Order.objects.all()
         context["pendingorders"] = Order.objects.filter(order_status="Order Received").order_by("-id")
         return context
 
@@ -434,6 +437,26 @@ class DeleteProduct(AdminRequiredMixin, View):
         print(prod_obj)
         if prod_obj:
             prod_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+class DeleteBrand(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        brand_id = self.kwargs["brand_id"]
+        brand_obj = Brand.objects.get(id=brand_id)
+        if brand_obj:
+            brand_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+class DeleteCategory(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        cat_id = self.kwargs["cat_id"]
+        cat_obj = Category.objects.get(id=cat_id)
+        if cat_obj:
+            cat_obj.delete()
         else:
             pass
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
@@ -642,8 +665,9 @@ class CategoryUpdateView(AdminRequiredMixin, UpdateView):
 
 class UserUpdateView(AdminRequiredMixin, UpdateView):
     template_name = "userUpdateForm.html"
-    model = User
+    model = Customer
     fields = [
-        "username", "password", "email", "full_name", "address"
+        "full_name", "address"
     ]
     success_url = "admin-user-list"
+

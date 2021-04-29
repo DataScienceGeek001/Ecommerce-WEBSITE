@@ -39,6 +39,8 @@ urlpatterns = [
 
     path("delete-customer/<int:cust_id>", DeleteCustomer.as_view(), name="deletecustomer"),
     path("delete-product/<int:prod_id>", DeleteProduct.as_view(), name="deleteproduct"),
+    path("delete-brand/<int:brand_id>", DeleteBrand.as_view(), name="deletebrand"),
+    path("delete-category/<int:cat_id>", DeleteCategory.as_view(), name="deletecategory"),
 
     # Admin Links
     path("admin-order-details/<int:ord_id>", AdminOrderDetails.as_view(), name="adminOrderDetails"),

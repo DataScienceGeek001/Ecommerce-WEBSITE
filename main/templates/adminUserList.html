@@ -30,8 +30,8 @@
                     <td>{{customer.full_name}}</td>
                     <td>{{customer.address}}</td>
                     <td>{{customer.joined_on}}</td>
-                    <td style="text-align:center" ><a href="{% url 'userUpdate' customer.user.id %}" class="btn btn-warning mr-2 btn-sm"> EDIT </a>
-                        <a href="" onclick="return confirm('Are you sure you want to delete this brand?')"
+                    <td style="text-align:center" ><a href="{% url 'userUpdate' customer.id %}" class="btn btn-warning mr-2 btn-sm"> EDIT </a>
+                        <a href="{% url 'deletecustomer' customer.user.id %}" onclick="return confirm('Are you sure you want to delete this brand?')"
                             class="btn btn-danger btn-sm"> DELETE </a>
                         </td>
                 </tr>

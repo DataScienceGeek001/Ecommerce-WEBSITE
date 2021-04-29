@@ -25,8 +25,8 @@ SECRET_KEY = '+2*y%tvkr_#ur1ugmff9bs-88jf&gu+!n5e^p)0lgqrsqx552='
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['shopit-djangoapp.herokuapp.com']
-
+# ALLOWED_HOSTS = ['shopit-djangoapp.herokuapp.com']
+ALLOWED_HOSTS = []
 
 # Application definition
 

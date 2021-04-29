@@ -1,9 +1,8 @@
-{% extends 'adminbase.html' %}
+{% extends 'adminbase3.html' %}
 
 {% block title %}All Orders {% endblock %}
 {% load humanize %}
 {% block content %}
-<div class="container">
     <div class="row">
         <div class="col-md-12">
             <br/>
@@ -15,6 +14,7 @@
                         <th>Order ID </th>
                         <th>Customer</th>
                         <th>Ordered On</th>
+                        <th>Payment Method</th>
                         <th>Amount</th>
                         <th>Status</th>
                     </tr>
@@ -26,6 +26,7 @@
                         <td><a href="{% url 'adminOrderDetails' order.id %}">#ORDER_{{order.id}}</a></td>
                         <td>{{order.ordered_by}}</td>
                         <td>{{order.created_at}}</td>
+                        <td>{{order.payment_method}}</td>
                         <td>{{order.total}}</td>
                         <td>{{order.order_status}}</td>
             
@@ -34,6 +35,5 @@
                 </tbody>
             </table>
         </div>
-    </div>
 </div>
 {% endblock %}

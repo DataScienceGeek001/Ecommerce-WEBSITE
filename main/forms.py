@@ -22,7 +22,7 @@ class CheckoutForm(forms.ModelForm):
     class Meta:
         model = Order
         fields = ["ordered_by", "shipping_address",
-                  "mobile", "email"]
+                  "mobile", "email", "payment_method"]
 
 class CustomerRegistrationForm(forms.ModelForm):
     username = forms.CharField(widget=forms.TextInput())
@@ -119,3 +119,19 @@ class ProductAttributeForm(forms.ModelForm):
     class Meta:
         model = ProductAttribute
         fields = ["product", "color", "size", "image"]
+
+class BrandAddForm(forms.ModelForm):
+    title = forms.CharField(widget=forms.TextInput())
+    image = forms.FileField()
+
+    class Meta:
+        model = Brand
+        fields = ["title", "image"]
+
+class CategoryAddForm(forms.ModelForm):
+    title = forms.CharField(widget=forms.TextInput())
+    image = forms.FileField()
+
+    class Meta:
+        model = Category
+        fields = ["title", "image"]

@@ -14,7 +14,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 
-from django.views.generic import View, TemplateView, CreateView, FormView, ListView
+from django.views.generic import View, TemplateView, CreateView, FormView, ListView, UpdateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 
@@ -256,7 +256,7 @@ class EmptyCartView(EcomMixin, View):
 class CheckoutView(EcomMixin, CreateView):
     template_name = "checkout.html"
     form_class = CheckoutForm
-    success_url = '/success/'
+    success_url = 'home'
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.user.customer:
@@ -273,11 +273,6 @@ class CheckoutView(EcomMixin, CreateView):
             cart_obj = Cart.objects.get(id=cart_id)
         else:
             cart_obj = None
-
-        client = razorpay.Client(
-            auth=("rzp_test_ejxwUwJ32rcHr9", "NyZiMrNZQSE6yHStcTvTo63a"))
-
-        payment = client.order.create({'amount': cart_obj.total, 'currency': 'INR', 'payment_capture': '1'})
         
         context['cart'] = cart_obj
         return context
@@ -292,9 +287,27 @@ class CheckoutView(EcomMixin, CreateView):
             form.instance.total = cart_obj.total
             form.instance.order_status = "Order Received"
             del self.request.session['cart_id']
+            pm = form.cleaned_data.get("payment_method")
+            order = form.save()
+            if pm == "Razorpay":
+                return redirect(reverse("razorpayrequest") + "?o_id=" + str(order.id))
+
         else:
             return redirect("home")
         return super().form_valid(form)
+
+class RazorpayRequestView(View):
+    def get(self, request, *args, **kwargs):
+        o_id = request.GET.get("o_id")
+        order = Order.objects.get(id=o_id)
+        client = razorpay.Client(
+            auth=("rzp_test_ejxwUwJ32rcHr9", "NyZiMrNZQSE6yHStcTvTo63a"))
+
+        payment = client.order.create({'amount': order.total, 'currency': 'INR', 'payment_capture': '1'})
+        context = {
+            "order": order 
+        }
+        return context
 
 
 class CustomerRegistrationView(EcomMixin, CreateView):
@@ -511,7 +524,7 @@ class PasswordResetView(FormView):
 class AddProductView(AdminRequiredMixin, FormView):
     template_name = "addProducts.html"
     form_class = ProductAddForm
-    success_url = "/admin-home/"
+    success_url = "admin-product-list"
 
     def form_valid(self, form):
         title = form.cleaned_data.get("title")
@@ -527,22 +540,10 @@ class AddProductView(AdminRequiredMixin, FormView):
         
         return super().form_valid(form)
 
-# def addproductattr(request):
-    
-#     if request.method == "POST":
-#         form = ProductAttributeForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             print("Inside Form")
-#             form.save()
-#             return redirect('/admin-home')
-#     else:
-#         form = ProductAttributeForm
-#     return render(request,'addProductAttributes.html', {'form': form})
-
 class AddProductAttributeView(AdminRequiredMixin, FormView):
     template_name = "addProductAttributes.html"
     form_class = ProductAttributeForm
-    success_url = "/admin-home/"
+    success_url = "admin-product-list"
 
     def form_valid(self, form):
         product = form.cleaned_data.get("product")
@@ -555,5 +556,94 @@ class AddProductAttributeView(AdminRequiredMixin, FormView):
 
 @csrf_exempt
 def success(request):
-    del request.session['cart_id']
+    # del request.session['cart_id']
     return render(request, "success.html")
+
+class AdminProductListView(AdminRequiredMixin, ListView):
+    template_name = 'adminProductList.html'
+    queryset = Product.objects.all().order_by("-id")
+    context_object_name = "products"
+
+class AdminBrandListView(AdminRequiredMixin, ListView):
+    template_name = 'adminBrandList.html'
+    queryset = Brand.objects.all().order_by("-id")
+    context_object_name = "brands"
+
+class AdminCategoryListView(AdminRequiredMixin, ListView):
+    template_name = 'adminCategoryList.html'
+    queryset = Category.objects.all().order_by("-id")
+    context_object_name = "categorys"
+
+
+class AdminUserListView(AdminRequiredMixin, ListView):
+    template_name = 'adminUserList.html'
+    queryset = Customer.objects.all().order_by("-id")
+    context_object_name = "customers"
+
+class AddBrandView(AdminRequiredMixin, FormView):
+    template_name = "addBrand.html"
+    form_class = BrandAddForm
+    success_url = "admin-brand-list"
+
+    def form_valid(self, form):
+        title = form.cleaned_data.get("title")
+        image = form.cleaned_data.get("image")
+        form.save()
+        return super().form_valid(form)
+
+class AddCategoryView(AdminRequiredMixin, FormView):
+    template_name = "addCategory.html"
+    form_class = CategoryAddForm
+    success_url = "admin-category-list"
+
+    def form_valid(self, form):
+        title = form.cleaned_data.get("title")
+        image = form.cleaned_data.get("image")
+        form.save()
+        return super().form_valid(form)
+
+class AddCustomerView(AdminRequiredMixin, FormView):
+    template_name = "addCustomer.html"
+    form_class = CustomerRegistrationForm
+    success_url = "admin-user-list"
+
+    def form_valid(self, form):
+        username = form.cleaned_data.get("username")
+        password = form.cleaned_data.get("password")
+        email = form.cleaned_data.get("email")
+        user = User.objects.create_user(username, email, password)
+        form.instance.user = user
+        form.save()
+        return super().form_valid(form)
+
+class ProductUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "productUpdateForm.html"
+    model = Product
+    fields = [
+        "title", "slug", "details", "specs", "category", "brand", "price", "is_featured"
+    ]
+    success_url = "admin-product-list"
+
+class BrandUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "brandUpdateForm.html"
+    model = Brand
+    fields = [
+        "title", "image"
+    ]
+    success_url = "admin-brand-list"
+
+class CategoryUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "categoryUpdateForm.html"
+    model = Category
+    fields = [
+        "title", "image"
+    ]
+    success_url = "admin-category-list"
+
+class UserUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "userUpdateForm.html"
+    model = User
+    fields = [
+        "username", "password", "email", "full_name", "address"
+    ]
+    success_url = "admin-user-list"

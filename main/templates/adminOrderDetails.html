@@ -1,4 +1,4 @@
-{% extends "adminbase.html" %}
+{% extends "adminbase3.html" %}
 
 {% load static %}
 
@@ -51,7 +51,7 @@
                     <option value="{{i}}" {% if i == order.order_status %}selected{% endif %}>{{j}}</option>
                     {% endfor %}
                 </select>
-                <button class="btn btn-info">Change</button>
+                <button class="btn btn-info btn-sm">Change</button>
                 
             </form>
         </div>

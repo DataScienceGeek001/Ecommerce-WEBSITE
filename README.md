@@ -1,4 +1,2 @@
-# Ecommerce-WEBSITE
+# ShopIT - An Ecommerce Website Clone
 Ecommerce Website using Django, and Python
-
-<h3> ShopIT - An Ecommerce Website Clone </h3>

@@ -1,36 +1,39 @@
-from django.shortcuts import render, redirect, get_object_or_404
+# For Rendering
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
-from .models import Category, Brand, Product, ProductAttribute, Banner
-
-from .models import *
-
-from django.db.models import Max, Min, Count
+from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
-
 from django.urls import reverse_lazy, reverse
 
-from .forms import *
+# For Authentication
 from django.contrib.auth import login, authenticate, logout
-from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
-
-from django.views.generic import View, TemplateView, CreateView, FormView, ListView, UpdateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.contrib import messages
+
+# For Forms and Models
+from django.views.generic import View, TemplateView, CreateView, FormView, ListView, UpdateView
+from django.db.models import Max, Min, Count
+from .models import *
+from .forms import *
 
 # For Password Reset
 from .utils import password_reset_token
 from django.core.mail import send_mail
 from django.conf import settings
 
-import razorpay
+# For Payment
 from django.views.decorators.csrf import csrf_exempt
+import razorpay
 
 # REST FRAMEWORK TESTING
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from .main_serializer import ProductSerializer
 
+''' REST FRAMEWORK '''
+
+# Displaying data using REST Framework
 class JSONResponse(HttpResponse):
     """
     An HttpResponse that renders its content into JSON.
@@ -40,15 +43,16 @@ class JSONResponse(HttpResponse):
         kwargs['content_type'] = 'application/json'
         super(JSONResponse, self).__init__(content, **kwargs)
 
-
 def product_rest_list(request):
     if request.method == 'GET':
         products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
         return JSONResponse(serializer.data)
 
-# Create your views here.
 
+''' MIXIN VIEWS '''
+
+# Mixin for customer authentication
 class EcomMixin(object):
     def dispatch(self, request, *args, **kwargs):
         cart_id = request.session.get("cart_id")
@@ -59,23 +63,35 @@ class EcomMixin(object):
                 cart_obj.save()
         return super().dispatch(request, *args, **kwargs)
 
+# Mixin for Admin authentication
+class AdminRequiredMixin(object):
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.is_superuser:
+            pass
+        else:
+            return redirect("/login/")
+        return super().dispatch(request, *args, **kwargs)
 
+
+''' ''' ''' FRONTEND VIEWS ''' ''' '''
+
+# Customer Home
 def home(request):
     banners = Banner.objects.all().order_by('-id')
     data = Product.objects.filter(is_featured=True).order_by('-id')
     return render(request, 'index.html', {'data': data, 'banners': banners})
 
-# Category
+# Category View
 def category_list(request):
     data = Category.objects.all().order_by('-id')
     return render(request, 'category_list.html', {'data': data})
 
-# Brand
+# Brand View
 def brand_list(request):
     brands = Brand.objects.all().order_by('-id')
     return render(request, 'brand_list.html', {'brands': brands})
 
-# Product List
+# Product List View
 def product_list(request):
     data = Product.objects.all().order_by('-id')
     return render(request, 'product_list.html', 
@@ -83,6 +99,7 @@ def product_list(request):
                     'data': data,
                 })
 
+# Category Based product views
 def category_product_list(request, cat_id):
     category = Category.objects.get(id=cat_id)
     data = Product.objects.filter(category=category).order_by('-id')
@@ -90,6 +107,7 @@ def category_product_list(request, cat_id):
             'data': data, 
             })
 
+# Brand based product Views
 def brand_product_list(request, brand_id):
     brand = Brand.objects.get(id=brand_id)
     data = Product.objects.filter(brand=brand).order_by('-id')
@@ -97,35 +115,19 @@ def brand_product_list(request, brand_id):
             'data': data,
             })
 
-# Product Details
+# Product Detail View
 def product_detail(request, slug, id):
     product = Product.objects.get(id=id)
-    is_favourite = False
-    # if product.favourite.filter(id=request.customer.id).exists():
-    #     is_favourite = True
     related_products = Product.objects.filter(category=product.category).exclude(id=id)[:3]
     return render(request, 'product_detail.html', {'data': product, 'related': related_products})
 
-
-def register_request(request):
-    if request.method == "POST":
-        form = NewUserForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, "Registration Successful.")
-            return redirect("home")
-        messages.error(request, "Unsuccessful registratio. Invalid information.")
-    form = NewUserForm()
-    return render (request=request, template_name="register.html", context={"register_form":form})
-
-
+# Search View
 def search(request):
     q = request.GET['q']
     data = Product.objects.filter(title__icontains=q).order_by('-id')
     return render(request, 'search.html', {'data': data})
 
-
+# Filtering Data
 def filter_data(request):
     colors = request.GET.getlist('color[]')
     categories = request.GET.getlist('category[]')
@@ -150,9 +152,12 @@ def filter_data(request):
     return JsonResponse({'data': t})
 
 
+''' ''' ''' CART VIEWS  ''' ''' '''
+
+# Add to Cart View
 @method_decorator(login_required(login_url="/login/"), name='dispatch')
 class AddToCartView(EcomMixin, TemplateView):
-    template_name = "addtocart.html"
+    template_name = "cart/addtocart.html"
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -198,8 +203,9 @@ class AddToCartView(EcomMixin, TemplateView):
         return context
 
 
+# Cart View
 class MyCartView(EcomMixin, TemplateView):
-    template_name = "mycart.html"
+    template_name = "cart/mycart.html"
 
     # @login_required(login_url='/login')
     def get_context_data(self, **kwargs):
@@ -212,6 +218,7 @@ class MyCartView(EcomMixin, TemplateView):
         context['cart'] = cart
         return context
 
+# Manage Cart View
 class ManageCartView(EcomMixin, View):
     def get(self, request, *args, **kwargs):
         print("This is Manage Cart Section")
@@ -243,6 +250,7 @@ class ManageCartView(EcomMixin, View):
 
         return redirect("mycart")
 
+# Empty Cart View
 class EmptyCartView(EcomMixin, View):
     def get(self, request, *args, **kwargs):
         cart_id = request.session.get("cart_id", None)
@@ -253,10 +261,11 @@ class EmptyCartView(EcomMixin, View):
             cart.save()
         return redirect("mycart")
 
+# Cart Checkout View
 class CheckoutView(EcomMixin, CreateView):
-    template_name = "checkout.html"
+    template_name = "cart/checkout.html"
     form_class = CheckoutForm
-    success_url = 'home'
+    success_url = '/'
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.user.customer:
@@ -296,6 +305,7 @@ class CheckoutView(EcomMixin, CreateView):
             return redirect("home")
         return super().form_valid(form)
 
+# Razorpay request view
 class RazorpayRequestView(View):
     def get(self, request, *args, **kwargs):
         o_id = request.GET.get("o_id")
@@ -309,9 +319,18 @@ class RazorpayRequestView(View):
         }
         return context
 
+# Customer Payment Success View
+@csrf_exempt
+def success(request):
+    # del request.session['cart_id']
+    return render(request, "success.html")
 
+
+''' ''' ''' CUSTOMER VIEWS ''' ''' '''
+
+# Customer Registration View
 class CustomerRegistrationView(EcomMixin, CreateView):
-    template_name = "customerregistration.html"
+    template_name = "customer/customerregistration.html"
     form_class = CustomerRegistrationForm
     success_url = reverse_lazy("home")
 
@@ -331,14 +350,15 @@ class CustomerRegistrationView(EcomMixin, CreateView):
         else:
             return self.success_url
 
+# Customer Logout View
 class CustomerLogoutView(EcomMixin, View):
     def get(self, request):
         logout(request)
         return redirect("home")
 
-
+# Customer Login View
 class CustomerLoginView(EcomMixin, FormView):
-    template_name = "customerlogin.html"
+    template_name = "customer/customerlogin.html"
     form_class = CustomerLoginForm
     success_url = reverse_lazy("home")
 
@@ -365,8 +385,9 @@ class CustomerLoginView(EcomMixin, FormView):
         else:
             return self.success_url
 
+# Customer Profile View
 class CustomerProfileView(TemplateView):
-    template_name = "customerprofile.html"
+    template_name = "customer/customerprofile.html"
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and Customer.objects.filter(user=request.user).exists():
@@ -385,6 +406,7 @@ class CustomerProfileView(TemplateView):
         context["favorites"] = favorites
         return context
 
+# Add to Favorite View
 @login_required(login_url='/login/')
 def add_to_favourite(request, id):
     # print(id)
@@ -396,106 +418,9 @@ def add_to_favourite(request, id):
         product.favorite.add(request.user.customer)
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
-class AdminRequiredMixin(object):
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.is_superuser:
-            pass
-        else:
-            return redirect("/login/")
-        return super().dispatch(request, *args, **kwargs)
-
-class AdminHomeView(AdminRequiredMixin, TemplateView):
-    template_name = "adminhome2.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['customers'] = Customer.objects.all()
-        context['products'] = Product.objects.all()
-        context['brands'] = Brand.objects.all()
-        context['categorys'] = Category.objects.all()
-        context['orders'] = Order.objects.all()
-        context["pendingorders"] = Order.objects.filter(order_status="Order Received").order_by("-id")
-        return context
-
-class DeleteCustomer(AdminRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        print("This is User Section for Admin")
-        user_id = self.kwargs["cust_id"]
-        user_obj = User.objects.get(id=user_id)
-        if user_obj:
-            user_obj.delete()
-        else:
-            pass
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
-
-class DeleteProduct(AdminRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        print("This is Product Section for Admin")
-        prod_id = self.kwargs["prod_id"]
-        print(prod_id)
-        prod_obj = Product.objects.get(id=prod_id)
-        print(prod_obj)
-        if prod_obj:
-            prod_obj.delete()
-        else:
-            pass
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
-
-class DeleteBrand(AdminRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        brand_id = self.kwargs["brand_id"]
-        brand_obj = Brand.objects.get(id=brand_id)
-        if brand_obj:
-            brand_obj.delete()
-        else:
-            pass
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
-
-class DeleteCategory(AdminRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        cat_id = self.kwargs["cat_id"]
-        cat_obj = Category.objects.get(id=cat_id)
-        if cat_obj:
-            cat_obj.delete()
-        else:
-            pass
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
-
-class AdminOrderDetails(AdminRequiredMixin, TemplateView):
-    template_name = "adminOrderDetails.html"
-
-    def get_context_data(self, **kwargs):
-        print("This is Order Details for Admin")
-        context = super().get_context_data(**kwargs)
-        order_id = self.kwargs["ord_id"]
-        print(order_id)
-        order_obj = Order.objects.get(id=order_id)
-        context['order'] = order_obj
-        context['statuses'] = ORDER_STATUS
-        return context
-
-class AdminOrderListView(AdminRequiredMixin, ListView):
-    template_name = "adminorderlist.html"
-    queryset = Order.objects.all().order_by("-id")
-    context_object_name = "allorders"
-    # paginate_by = 3
-
-
-class AdminOrderStatusChange(AdminRequiredMixin, View):
-    
-    def post(self, request, *args, **kwargs):
-        ord_id = self.kwargs['ord_id']
-        ord_obj = Order.objects.get(id=ord_id)
-        print("This is Order Status Change View")
-        print(ord_id, ord_obj)
-        new_status = request.POST.get('status')
-        ord_obj.order_status = new_status
-        ord_obj.save()
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
-
-
+# Customer Password Forgot View
 class PasswordForgotView(FormView):
-    template_name = "forgotpassword.html"
+    template_name = "customer/forgotpassword.html"
     form_class = PasswordForgotForm
     success_url = "/login/"
 
@@ -520,8 +445,9 @@ class PasswordForgotView(FormView):
         )
         return super().form_valid(form)
 
+# Customer Password Reset View
 class PasswordResetView(FormView):
-    template_name = "passwordreset.html"
+    template_name = "customer/passwordreset.html"
     form_class = PasswordResetForm
     success_url = "/login/"
 
@@ -544,8 +470,109 @@ class PasswordResetView(FormView):
         user.save()
         return super().form_valid(form)
 
+
+
+''' ''' ''' ADMIN VIEWS ''' ''' '''
+
+# Admin Home View
+class AdminHomeView(AdminRequiredMixin, TemplateView):
+    template_name = "admin/adminhome2.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['customers'] = Customer.objects.all()
+        context['products'] = Product.objects.all()
+        context['brands'] = Brand.objects.all()
+        context['categorys'] = Category.objects.all()
+        context['orders'] = Order.objects.all()
+        context["pendingorders"] = Order.objects.filter(order_status="Order Received").order_by("-id")
+        return context
+
+# Admin Delete Customer View
+class DeleteCustomer(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        user_id = self.kwargs["cust_id"]
+        user_obj = User.objects.get(id=user_id)
+        if user_obj:
+            user_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+# Admin Delete Product View
+class DeleteProduct(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        prod_id = self.kwargs["prod_id"]
+        prod_obj = Product.objects.get(id=prod_id)
+        if prod_obj:
+            prod_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+# Admin Delete Brand View
+class DeleteBrand(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        brand_id = self.kwargs["brand_id"]
+        brand_obj = Brand.objects.get(id=brand_id)
+        if brand_obj:
+            brand_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+# Admin Delete Category View
+class DeleteCategory(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        cat_id = self.kwargs["cat_id"]
+        cat_obj = Category.objects.get(id=cat_id)
+        if cat_obj:
+            cat_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+
+
+#############  ADMIN ORDER VIEWS #############
+
+# Admin Order Details
+class AdminOrderDetails(AdminRequiredMixin, TemplateView):
+    template_name = "admin/adminOrderDetails.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        order_id = self.kwargs["ord_id"]
+        order_obj = Order.objects.get(id=order_id)
+        context['order'] = order_obj
+        context['statuses'] = ORDER_STATUS
+        return context
+
+# Admin Order List
+class AdminOrderListView(AdminRequiredMixin, ListView):
+    template_name = "admin/adminorderlist.html"
+    queryset = Order.objects.all().order_by("-id")
+    context_object_name = "allorders"
+    # paginate_by = 3
+
+# Admin Order Status Change
+class AdminOrderStatusChange(AdminRequiredMixin, View):
+    
+    def post(self, request, *args, **kwargs):
+        ord_id = self.kwargs['ord_id']
+        ord_obj = Order.objects.get(id=ord_id)
+        new_status = request.POST.get('status')
+        ord_obj.order_status = new_status
+        ord_obj.save()
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+
+
+#############  ADMIN PRODUCT VIEWS #############
+
+# Admin Add Product View
 class AddProductView(AdminRequiredMixin, FormView):
-    template_name = "addProducts.html"
+    template_name = "admin/addProducts.html"
     form_class = ProductAddForm
     success_url = "admin-product-list"
 
@@ -563,8 +590,9 @@ class AddProductView(AdminRequiredMixin, FormView):
         
         return super().form_valid(form)
 
+# Admin Add Product Attribute View
 class AddProductAttributeView(AdminRequiredMixin, FormView):
-    template_name = "addProductAttributes.html"
+    template_name = "admin/addProductAttributes.html"
     form_class = ProductAttributeForm
     success_url = "admin-product-list"
 
@@ -577,34 +605,43 @@ class AddProductAttributeView(AdminRequiredMixin, FormView):
         p.save
         return super().form_valid(form)
 
-@csrf_exempt
-def success(request):
-    # del request.session['cart_id']
-    return render(request, "success.html")
-
+# Admin Product List View
 class AdminProductListView(AdminRequiredMixin, ListView):
-    template_name = 'adminProductList.html'
+    template_name = 'admin/adminProductList.html'
     queryset = Product.objects.all().order_by("-id")
     context_object_name = "products"
 
+#Admin Product Update View
+class ProductUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "admin/productUpdateForm.html"
+    model = Product
+    fields = [
+        "title", "slug", "details", "specs", "category", "brand", "price", "is_featured"
+    ]
+    success_url = "admin-product-list"
+
+
+
+#############  ADMIN BRAND VIEWS #############
+
+# Admin Brand List View
 class AdminBrandListView(AdminRequiredMixin, ListView):
-    template_name = 'adminBrandList.html'
+    template_name = 'admin/adminBrandList.html'
     queryset = Brand.objects.all().order_by("-id")
     context_object_name = "brands"
 
-class AdminCategoryListView(AdminRequiredMixin, ListView):
-    template_name = 'adminCategoryList.html'
-    queryset = Category.objects.all().order_by("-id")
-    context_object_name = "categorys"
+# Admin Brand Update View
+class BrandUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "admin/brandUpdateForm.html"
+    model = Brand
+    fields = [
+        "title", "image"
+    ]
+    success_url = "admin-brand-list"
 
-
-class AdminUserListView(AdminRequiredMixin, ListView):
-    template_name = 'adminUserList.html'
-    queryset = Customer.objects.all().order_by("-id")
-    context_object_name = "customers"
-
+# Admin Add Brand View
 class AddBrandView(AdminRequiredMixin, FormView):
-    template_name = "addBrand.html"
+    template_name = "admin/addBrand.html"
     form_class = BrandAddForm
     success_url = "admin-brand-list"
 
@@ -614,8 +651,19 @@ class AddBrandView(AdminRequiredMixin, FormView):
         form.save()
         return super().form_valid(form)
 
+
+
+#############  ADMIN CATEGORY VIEWS #############
+
+# Admin Category List View
+class AdminCategoryListView(AdminRequiredMixin, ListView):
+    template_name = 'admin/adminCategoryList.html'
+    queryset = Category.objects.all().order_by("-id")
+    context_object_name = "categorys"
+
+# Admin Add Category View
 class AddCategoryView(AdminRequiredMixin, FormView):
-    template_name = "addCategory.html"
+    template_name = "admin/addCategory.html"
     form_class = CategoryAddForm
     success_url = "admin-category-list"
 
@@ -625,8 +673,28 @@ class AddCategoryView(AdminRequiredMixin, FormView):
         form.save()
         return super().form_valid(form)
 
+# Admin Category Update View
+class CategoryUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "admin/categoryUpdateForm.html"
+    model = Category
+    fields = [
+        "title", "image"
+    ]
+    success_url = "admin-category-list"
+
+
+
+#############  ADMIN USER VIEWS #############
+
+# Admin User List View
+class AdminUserListView(AdminRequiredMixin, ListView):
+    template_name = 'admin/adminUserList.html'
+    queryset = Customer.objects.all().order_by("-id")
+    context_object_name = "customers"
+
+# Admin Add Customer View
 class AddCustomerView(AdminRequiredMixin, FormView):
-    template_name = "addCustomer.html"
+    template_name = "admin/addCustomer.html"
     form_class = CustomerRegistrationForm
     success_url = "admin-user-list"
 
@@ -639,35 +707,11 @@ class AddCustomerView(AdminRequiredMixin, FormView):
         form.save()
         return super().form_valid(form)
 
-class ProductUpdateView(AdminRequiredMixin, UpdateView):
-    template_name = "productUpdateForm.html"
-    model = Product
-    fields = [
-        "title", "slug", "details", "specs", "category", "brand", "price", "is_featured"
-    ]
-    success_url = "admin-product-list"
-
-class BrandUpdateView(AdminRequiredMixin, UpdateView):
-    template_name = "brandUpdateForm.html"
-    model = Brand
-    fields = [
-        "title", "image"
-    ]
-    success_url = "admin-brand-list"
-
-class CategoryUpdateView(AdminRequiredMixin, UpdateView):
-    template_name = "categoryUpdateForm.html"
-    model = Category
-    fields = [
-        "title", "image"
-    ]
-    success_url = "admin-category-list"
-
+# Admin User Update View
 class UserUpdateView(AdminRequiredMixin, UpdateView):
-    template_name = "userUpdateForm.html"
+    template_name = "admin/userUpdateForm.html"
     model = Customer
     fields = [
         "full_name", "address"
     ]
     success_url = "admin-user-list"
-

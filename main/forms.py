@@ -4,26 +4,14 @@ from django.contrib.auth.models import User
 
 from .models import *
 
-class NewUserForm(UserCreationForm):
-	email = forms.EmailField(required=True)
-
-	class Meta:
-		model = User
-		fields = ("username", "email", "password1", "password2")
-
-	def save(self, commit=True):
-		user = super(NewUserForm, self).save(commit=False)
-		user.email = self.cleaned_data['email']
-		if commit:
-			user.save()
-		return user
-
+# Checkout Form
 class CheckoutForm(forms.ModelForm):
     class Meta:
         model = Order
         fields = ["ordered_by", "shipping_address",
                   "mobile", "email", "payment_method"]
 
+# Customer Registration Form
 class CustomerRegistrationForm(forms.ModelForm):
     username = forms.CharField(widget=forms.TextInput())
     password = forms.CharField(widget=forms.PasswordInput())
@@ -41,7 +29,7 @@ class CustomerRegistrationForm(forms.ModelForm):
 
         return uname
 
-
+# Customer Login Form
 class CustomerLoginForm(forms.Form):
     username = forms.CharField(widget=forms.TextInput())
     password = forms.CharField(widget=forms.PasswordInput())
@@ -56,6 +44,7 @@ class CustomerLoginForm(forms.Form):
 
         return uname
 
+# Forgot Password Form
 class PasswordForgotForm(forms.Form):
     email = forms.CharField(
         widget=forms.EmailInput(
@@ -72,8 +61,9 @@ class PasswordForgotForm(forms.Form):
             raise forms.ValidationError(
                 "Customer with this email does not exist. Please try again!"
             )
-        return e
-        
+        return e  
+
+# Password Reset Form
 class PasswordResetForm(forms.Form):
     new_password = forms.CharField(widget=forms.PasswordInput(attrs={
         'class': 'form-control',
@@ -94,6 +84,7 @@ class PasswordResetForm(forms.Form):
                 "Passwords did not match!")
         return confirm_new_password
 
+# Product Add Form
 class ProductAddForm(forms.ModelForm):
     title = forms.CharField(widget=forms.TextInput())
     slug = forms.CharField(widget=forms.TextInput())
@@ -110,6 +101,7 @@ class ProductAddForm(forms.ModelForm):
                   "specs", "category", "brand",
                   "price", "is_featured"]
     
+# Product Attribute Form
 class ProductAttributeForm(forms.ModelForm):
     product = forms.ModelChoiceField(queryset=Product.objects.all())
     color = forms.ModelChoiceField(queryset=Color.objects.all())
@@ -120,6 +112,7 @@ class ProductAttributeForm(forms.ModelForm):
         model = ProductAttribute
         fields = ["product", "color", "size", "image"]
 
+# Brand Add Form
 class BrandAddForm(forms.ModelForm):
     title = forms.CharField(widget=forms.TextInput())
     image = forms.FileField()
@@ -128,6 +121,7 @@ class BrandAddForm(forms.ModelForm):
         model = Brand
         fields = ["title", "image"]
 
+# Category Add Form
 class CategoryAddForm(forms.ModelForm):
     title = forms.CharField(widget=forms.TextInput())
     image = forms.FileField()

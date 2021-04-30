@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.html import mark_safe
 from django.contrib.auth.models import User
 
-
+# Customer Model
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=200)
@@ -15,7 +15,7 @@ class Customer(models.Model):
     def __str__(self):
         return self.full_name
 
-# Banner
+# Banner Model
 class Banner(models.Model):
     img = models.ImageField(upload_to='banner_imgs/')
     alt_text = models.CharField(max_length=300)
@@ -116,7 +116,7 @@ class ProductAttribute(models.Model):
     def __str__(self):
         return self.product.title
 
-
+# Cart Model
 class Cart(models.Model):
     customer = models.ForeignKey(
         Customer, on_delete=models.SET_NULL, null=True, blank=True)
@@ -129,6 +129,7 @@ class Cart(models.Model):
     def __str__(self):
         return "Cart: " + str(self.id)
 
+# Cart Product Model
 class CartProduct(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -141,6 +142,7 @@ class CartProduct(models.Model):
 
     def __str__(self):
         return "Cart: " + str(self.cart.id) + " CartProduct: " + str(self.id)
+
 
 ORDER_STATUS = (
     ("Order Received", "Order Received"),
@@ -155,7 +157,7 @@ METHOD = (
     ("Razorpay", "Razorpay")
 )
 
-
+# Order Model
 class Order(models.Model):
     cart = models.OneToOneField(Cart, on_delete=models.CASCADE)
     ordered_by = models.CharField(max_length=200)

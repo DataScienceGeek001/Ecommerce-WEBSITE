@@ -138,3 +138,11 @@ class ColorAddForm(forms.ModelForm):
     class Meta:
         model = Color
         fields = ["title", "color_code"]
+
+# Size Add Form
+class SizeAddForm(forms.ModelForm):
+    title = forms.CharField(widget=forms.TextInput())
+
+    class Meta:
+        model = Size
+        fields = ["title"]

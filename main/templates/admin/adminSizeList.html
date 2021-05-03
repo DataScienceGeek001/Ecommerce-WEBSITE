@@ -5,9 +5,9 @@
     <div class="col-md-10">
         <br />
             <div style="float: left;">
-                <h3>Color List</h3>
+                <h3>Size List</h3>
             </div>
-            <div style="float: right;"><a href="{% url 'addColor' %}" class="btn btn-success btn-sm">Add Color</a></div>
+            <div style="float: right;"><a href="{% url 'addSize' %}" class="btn btn-success btn-sm">Add Size</a></div>
             <br />
         <hr class="mt-4">
         <table class="table table-hover">
@@ -15,20 +15,16 @@
                 <tr>
                     <th>SN</th>
                     <th>Title</th>
-                    <th>Color_Code</th>
-                    <th>Color</th>
                     <th style="text-align:center" >Action</th>
                 </tr>
             </thead>
             <tbody>
-                {% for color in colors %}
+                {% for size in sizes %}
                 <tr>
                     <td>{{forloop.counter}}</td>
-                    <td>{{color.title}}</td>
-                    <td>{{color.color_code}}</td>
-                    <td><span class="btn btn-lg" style="background-color: {{color.color_code}}"></span></td>
-                    <td style="text-align:center"><a href="{% url 'colorUpdate' color.id %}" class="btn btn-warning mr-2 btn-sm"> EDIT </a>
-                        <a href="{% url 'deletecolor' color.id %}" onclick="return confirm('Are you sure you want to delete this color?')"
+                    <td>{{size.title}}</td>
+                    <td style="text-align:center"><a href="{% url 'sizeUpdate' size.id %}" class="btn btn-warning mr-2 btn-sm"> EDIT </a>
+                        <a href="{% url 'deletesize' size.id %}" onclick="return confirm('Are you sure you want to delete this size?')"
                             class="btn btn-danger btn-sm"> DELETE </a>
                         </td>
                 </tr>

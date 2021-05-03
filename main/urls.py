@@ -64,6 +64,8 @@ urlpatterns = [
     path("admin-order-list", AdminOrderListView.as_view(), name="adminOrderList"),
     path("admin-order-details/<int:ord_id>", AdminOrderDetails.as_view(), name="adminOrderDetails"),
     path("admin-color-list", AdminColorListView.as_view(), name="adminColorList"),
+    path("admin-size-list", AdminSizeListView.as_view(), name="adminSizeList"),
+    path("admin-pattr-list-<int:prod_id>", AdminProdcutAttributesView.as_view(), name="adminPattr"),
 
     ##### ADMIN CREATE URLS #####
     path('admin-add-product', AddProductView.as_view(), name='addProduct'),
@@ -72,6 +74,7 @@ urlpatterns = [
     path('admin-add-category', AddCategoryView.as_view(), name='addCategory'),
     path('admin-add-user', AddCustomerView.as_view(), name='addCustomer'),
     path('admin-add-color', AddColorView.as_view(), name='addColor'),
+    path('admin-add-size', AddSizeView.as_view(), name="addSize"),
 
     ##### ADMIN EDIT URLS #####
     path("admin-edit-product-<int:pk>", ProductUpdateView.as_view(), name="productUpdate"),
@@ -80,14 +83,18 @@ urlpatterns = [
     path("admin-edit-user-<int:pk>", UserUpdateView.as_view(), name="userUpdate"),
     path('admin-order-status-change-<int:ord_id>', AdminOrderStatusChange.as_view(), name='adminOrderStatusChange'),
     path('admin-edit-color-<int:pk>', ColorUpdateView.as_view(), name="colorUpdate"),
-    
+    path('admin-edit-size-<int:pk>', SizeUpdateView.as_view(), name="sizeUpdate"),
+    path('admin-edit-pattr=<int:pk>', ProductAttrUpdateView.as_view(), name="pattrUpdate"),
+
     ##### ADMIN DELETE URLS #####
     path("delete-product/<int:prod_id>", DeleteProduct.as_view(), name="deleteproduct"),
     path("delete-brand/<int:brand_id>", DeleteBrand.as_view(), name="deletebrand"),
     path("delete-category/<int:cat_id>", DeleteCategory.as_view(), name="deletecategory"),
     path("delete-customer/<int:cust_id>", DeleteCustomer.as_view(), name="deletecustomer"),
     path("delete-order/<int:ord_id>", DeleteOrder.as_view(), name="deleteorder"),
-
+    path("delete-color/<int:col_id>", DeleteColor.as_view(), name="deletecolor"),
+    path("delete-size/<int:size_id>", DeleteSize.as_view(), name="deletesize"),
+    path("delete-pattr/<int:pattr_id>", DeleteProductAttribute.as_view(), name="deletepattr"),
 ]
 
 if settings.DEBUG:

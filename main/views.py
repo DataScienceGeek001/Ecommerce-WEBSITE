@@ -543,6 +543,27 @@ class DeleteOrder(AdminRequiredMixin, View):
             pass
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
+# Admin Delete Color View
+class DeleteColor(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        col_id = self.kwargs["col_id"]
+        col_obj = Color.objects.get(id=col_id)
+        if col_obj:
+            col_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+# Admin Delete Size View
+class DeleteSize(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        size_id = self.kwargs["size_id"]
+        size_obj = Size.objects.get(id=size_id)
+        if size_obj:
+            size_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
 #############  ADMIN ORDER VIEWS #############
@@ -756,3 +777,64 @@ class ColorUpdateView(AdminRequiredMixin, UpdateView):
         "title", "color_code"
     ]
     success_url = "admin-color-list"
+
+
+############## ADMIN SIZE VIEWS ##############
+
+# Admin Size List View
+class AdminSizeListView(AdminRequiredMixin, ListView):
+    template_name = 'admin/adminSizeList.html'
+    queryset = Size.objects.all().order_by("-id")
+    context_object_name = "sizes"
+
+# Admin Add Size View
+class AddSizeView(AdminRequiredMixin, FormView):
+    template_name = "admin/addSize.html"
+    form_class = SizeAddForm
+    success_url = "admin-size-list"
+
+    def form_valid(self, form):
+        title = form.cleaned_data.get("title")
+        form.save()
+        return super().form_valid(form)
+
+# Admin Size Update View
+class SizeUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "admin/sizeUpdateForm.html"
+    model = Size
+    fields = [
+        "title"
+    ]
+    success_url = "admin-size-list"
+
+
+############### ADMIN PRODCUT ATTRIBUTES VIEW ##############
+
+class AdminProdcutAttributesView(AdminRequiredMixin, TemplateView):
+    template_name = 'admin/productAttributeList.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        prod_id = self.kwargs['prod_id']
+        product = Product.objects.get(id=prod_id)
+        data = ProductAttribute.objects.filter(product=product).order_by('-id')
+        context["prodAttr"] = data
+        return context
+
+class DeleteProductAttribute(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        pattr_id = self.kwargs["pattr_id"]
+        pattr_obj = ProductAttribute.objects.get(id=pattr_id)
+        if pattr_obj:
+            pattr_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+class ProductAttrUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "admin/pattrUpdateForm.html"
+    model = ProductAttribute
+    fields = [
+        "product", "color", "size", "image"
+    ]
+    success_url = "admin-product-list"

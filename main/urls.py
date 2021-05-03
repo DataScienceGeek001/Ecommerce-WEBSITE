@@ -63,7 +63,7 @@ urlpatterns = [
     path('admin-user-list', AdminUserListView.as_view(), name="adminUserList"),
     path("admin-order-list", AdminOrderListView.as_view(), name="adminOrderList"),
     path("admin-order-details/<int:ord_id>", AdminOrderDetails.as_view(), name="adminOrderDetails"),
-    
+    path("admin-color-list", AdminColorListView.as_view(), name="adminColorList"),
 
     ##### ADMIN CREATE URLS #####
     path('admin-add-product', AddProductView.as_view(), name='addProduct'),
@@ -71,7 +71,7 @@ urlpatterns = [
     path('admin-add-brand', AddBrandView.as_view(), name='addBrand'),
     path('admin-add-category', AddCategoryView.as_view(), name='addCategory'),
     path('admin-add-user', AddCustomerView.as_view(), name='addCustomer'),
-
+    path('admin-add-color', AddColorView.as_view(), name='addColor'),
 
     ##### ADMIN EDIT URLS #####
     path("admin-edit-product-<int:pk>", ProductUpdateView.as_view(), name="productUpdate"),
@@ -79,13 +79,14 @@ urlpatterns = [
     path("admin-edit-category-<int:pk>", CategoryUpdateView.as_view(), name="categoryUpdate"),
     path("admin-edit-user-<int:pk>", UserUpdateView.as_view(), name="userUpdate"),
     path('admin-order-status-change-<int:ord_id>', AdminOrderStatusChange.as_view(), name='adminOrderStatusChange'),
-    
+    path('admin-edit-color-<int:pk>', ColorUpdateView.as_view(), name="colorUpdate"),
     
     ##### ADMIN DELETE URLS #####
     path("delete-product/<int:prod_id>", DeleteProduct.as_view(), name="deleteproduct"),
     path("delete-brand/<int:brand_id>", DeleteBrand.as_view(), name="deletebrand"),
     path("delete-category/<int:cat_id>", DeleteCategory.as_view(), name="deletecategory"),
     path("delete-customer/<int:cust_id>", DeleteCustomer.as_view(), name="deletecustomer"),
+    path("delete-order/<int:ord_id>", DeleteOrder.as_view(), name="deleteorder"),
 
 ]
 

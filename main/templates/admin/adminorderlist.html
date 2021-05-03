@@ -17,6 +17,7 @@
                         <th>Payment Method</th>
                         <th>Amount</th>
                         <th>Status</th>
+                        <th style="text-align:center" >Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -29,7 +30,10 @@
                         <td>{{order.payment_method}}</td>
                         <td>{{order.total}}</td>
                         <td>{{order.order_status}}</td>
-            
+                        <td style="text-align:center">
+                        <a href="{% url 'deleteorder' order.id %}" onclick="return confirm('Are you sure you want to delete this order?')"
+                            class="btn btn-danger btn-sm"> DELETE </a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

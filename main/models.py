@@ -8,7 +8,7 @@ class Customer(models.Model):
     full_name = models.CharField(max_length=200)
     address = models.CharField(max_length=200, null=True, blank=True)
     joined_on = models.DateTimeField(auto_now_add=True)
-
+    
     class Meta:
         verbose_name_plural = 'Customers'
 

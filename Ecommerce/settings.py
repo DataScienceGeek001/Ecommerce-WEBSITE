@@ -96,14 +96,25 @@ WSGI_APPLICATION = 'Ecommerce.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'ecomdb',
+#         'USER': 'root',
+#         'PASSWORD': '1234',
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ecomdb',
-        'USER': 'root',
-        'PASSWORD': '1234',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'ecomdbpg',
+        'USER': 'ecom',
+        'PASSWORD': 'ecom123',
         'HOST': 'localhost',
-        'PORT': '3306',
+        'POST': '',
     }
 }
 

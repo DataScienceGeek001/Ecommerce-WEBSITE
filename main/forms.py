@@ -129,3 +129,12 @@ class CategoryAddForm(forms.ModelForm):
     class Meta:
         model = Category
         fields = ["title", "image"]
+
+# Color Add Form
+class ColorAddForm(forms.ModelForm):
+    title = forms.CharField(widget=forms.TextInput())
+    color_code = forms.CharField(widget=forms.TextInput())
+
+    class Meta:
+        model = Color
+        fields = ["title", "color_code"]

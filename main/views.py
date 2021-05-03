@@ -31,7 +31,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from .main_serializer import ProductSerializer
 
-''' REST FRAMEWORK '''
+''' ''' ''' REST FRAMEWORK ''' ''' '''
 
 # Displaying data using REST Framework
 class JSONResponse(HttpResponse):
@@ -50,7 +50,7 @@ def product_rest_list(request):
         return JSONResponse(serializer.data)
 
 
-''' MIXIN VIEWS '''
+''' ''' ''' MIXIN VIEWS ''' ''' '''
 
 # Mixin for customer authentication
 class EcomMixin(object):
@@ -532,6 +532,17 @@ class DeleteCategory(AdminRequiredMixin, View):
             pass
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
+# Admin Delete Order View
+class DeleteOrder(AdminRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        ord_id = self.kwargs["ord_id"]
+        ord_obj = Order.objects.get(id=ord_id)
+        if ord_obj:
+            ord_obj.delete()
+        else:
+            pass
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
 
 
 #############  ADMIN ORDER VIEWS #############
@@ -715,3 +726,33 @@ class UserUpdateView(AdminRequiredMixin, UpdateView):
         "full_name", "address"
     ]
     success_url = "admin-user-list"
+
+
+############## ADMIN COLOR VIEWS ##############
+
+# Admin Color List View
+class AdminColorListView(AdminRequiredMixin, ListView):
+    template_name = 'admin/adminColorList.html'
+    queryset = Color.objects.all().order_by("-id")
+    context_object_name = "colors"
+
+# Admin Add Color View
+class AddColorView(AdminRequiredMixin, FormView):
+    template_name = "admin/addColor.html"
+    form_class = ColorAddForm
+    success_url = "admin-color-list"
+
+    def form_valid(self, form):
+        title = form.cleaned_data.get("title")
+        color_code = form.cleaned_data.get("color_code")
+        form.save()
+        return super().form_valid(form)
+
+# Admin Color Update View
+class ColorUpdateView(AdminRequiredMixin, UpdateView):
+    template_name = "admin/colorUpdateForm.html"
+    model = Color
+    fields = [
+        "title", "color_code"
+    ]
+    success_url = "admin-color-list"
